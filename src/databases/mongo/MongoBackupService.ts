@@ -12,13 +12,13 @@ export class MongoBackupService implements IBackupService {
         await ensureDir(config.backupDir);
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupPath = path.join(config.backupDir, `backup-${timestamp}`);
-        const cmd = `mongodump --uri="${config.mongoUri}" --out="${backupPath}"`;
+        const cmd = `mongodump --uri="${config.mongoUri}" -o="${backupPath}"`;
 
         try {
             const { stdout, stderr } = await execAsync(cmd);
-            console.log(`✅ MongoDB Backup completed: ${backupPath}`);
             if (stdout) console.log(stdout);
             if (stderr) console.error(stderr);
+            console.log(`✅ MongoDB Backup completed: ${backupPath}`);
         } catch (err) {
             console.error('❌ An error occurred during MongoDB Backup:', err);
         }

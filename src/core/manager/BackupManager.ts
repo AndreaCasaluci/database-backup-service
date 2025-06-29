@@ -15,7 +15,7 @@ export class BackupManager {
         if (files.length >= config.maxBackups) {
             const oldest = files[0];
             await remove(path.join(config.backupDir, oldest));
-            console.log(`🗑️ Rimosso backup vecchio: ${oldest}`);
+            console.log(`🗑️ Old Backup Removed: ${oldest}`);
         }
     }
 }

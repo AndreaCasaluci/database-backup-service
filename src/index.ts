@@ -1,4 +1,3 @@
-// index.ts
 import { scheduleBackup } from "./scheduler/BackupJob";
 
 async function startService() {

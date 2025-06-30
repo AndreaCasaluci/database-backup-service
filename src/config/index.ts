@@ -9,13 +9,13 @@ export const config = {
     timezone: process.env.TIMEZONE || 'UTC',
     backupTimeout: parseInt(process.env.BACKUP_TIMEOUT || '1800000'),
     enableCompression: process.env.ENABLE_COMPRESSION === 'true',
-    notificationWebhook: process.env.NOTIFICATION_WEBHOOK,
     emailNotificationsEnabled: process.env.ENABLE_EMAIL_NOTIFICATIONS,
     notificationEmails: process.env.NOTIFICATION_EMAILS,
-    smtpHost: process.env.SMTP_HOST!,
-    smtpPort: process.env.SMTP_PORT!,
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: process.env.SMTP_PORT,
     smtpSecure: process.env.SMTP_SECURE === 'true',
-    smtpUser: process.env.SMTP_USER!,
-    smtpPass: process.env.SMTP_PASS!,
-
+    smtpUser: process.env.SMTP_USER,
+    smtpPass: process.env.SMTP_PASS,
+    discordNotificationsEnabled: process.env.ENABLE_DISCORD_NOTIFICATIONS === 'true',
+    discordWebhookUrl: process.env.DISCORD_WEBHOOK_URL
 };

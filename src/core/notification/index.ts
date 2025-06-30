@@ -21,7 +21,8 @@ export async function notifySuccess(message: string, report?: BackupReport) {
 export async function notifyFailure(message: string, error?: unknown, report?: BackupReport) {
     for (const notifier of notifiers) {
         try {
-            await notifier.sendFailure(message, error, report);
+            if (notifier instanceof EmailNotifier && config.emailNotificationsEnabled)
+                await notifier.sendFailure(message, error, report);
         } catch (err) {
             console.error('Notification failure (error):', err);
         }

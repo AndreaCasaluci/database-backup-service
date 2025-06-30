@@ -1,5 +1,5 @@
-import { IBackupService } from '../../core/interfaces/IBackupService';
-import { config } from '../../config';
+import { IBackupService } from '../../interfaces/IBackupService';
+import { config } from '../../../config';
 import { ensureDir, pathExists } from 'fs-extra';
 import { exec } from 'child_process';
 import { promisify } from 'util';

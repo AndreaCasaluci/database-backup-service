@@ -1,4 +1,4 @@
-import { scheduleBackup } from "./scheduler/BackupJob";
+import { scheduleBackup } from "./core/scheduler/BackupJob";
 
 async function startService() {
     console.log('Database Backup Service starting...');

@@ -1,8 +1,10 @@
 import cron from 'node-cron';
-import { config } from '../config';
+import { config } from '../../config';
 import { MongoBackupService } from '../databases/mongo/MongoBackupService';
-import { BackupManager } from '../core/manager/BackupManager';
-import { BackupJobStatus } from '../core/interfaces/BackupJobStatus';
+import { BackupManager } from '../manager/BackupManager';
+import { BackupJobStatus } from '../interfaces/BackupJobStatus';
+import { BackupReport } from '../interfaces/BackupReport';
+import { notifyFailure, notifySuccess } from '../notification';
 
 class BackupJob {
     private status: BackupJobStatus = {
@@ -70,6 +72,12 @@ class BackupJob {
         this.status.lastRunTime = startTime;
         this.status.totalRuns++;
 
+        const report: BackupReport = {
+            timestamp: startTime.toISOString(),
+            success: false,
+            durationSeconds: 0,
+        };
+
         console.log(`[${startTime.toISOString()}] 🚀 Starting scheduled backup (Run #${this.status.totalRuns})`);
 
         try {
@@ -80,10 +88,20 @@ class BackupJob {
             this.status.lastError = null;
 
             const duration = Date.now() - startTime.getTime();
+            report.durationSeconds = Math.round(duration / 1000);
+            report.success = true;
             console.log(`✅ Backup completed successfully in ${Math.round(duration / 1000)}s`);
 
             const stats = await this.manager.getBackupStats();
+            report.stats = {
+                totalBackups: stats.totalBackups,
+                totalSize: stats.totalSize,
+                oldestBackup: stats.oldestBackup?.toISOString() ?? null,
+                newestBackup: stats.newestBackup?.toISOString() ?? null,
+            };
             console.log(`📊 Backup Stats: ${stats.totalBackups} backups, ${this.formatBytes(stats.totalSize)} total size`);
+
+            await notifySuccess(`Backup succeeded at ${report.timestamp}`, report);
 
         } catch (error) {
             this.status.lastErrorTime = new Date();
@@ -91,7 +109,11 @@ class BackupJob {
             this.status.lastError = error instanceof Error ? error.message : 'Unknown error';
 
             const duration = Date.now() - startTime.getTime();
+            report.durationSeconds = Math.round(duration / 1000);
+
             console.error(`❌ Backup failed after ${Math.round(duration / 1000)}s:`, error);
+
+            await notifyFailure(`Backup failed at ${report.timestamp}`, error, report);
 
             await this.handleBackupFailure(error);
 

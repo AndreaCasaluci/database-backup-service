@@ -10,4 +10,12 @@ export const config = {
     backupTimeout: parseInt(process.env.BACKUP_TIMEOUT || '1800000'),
     enableCompression: process.env.ENABLE_COMPRESSION === 'true',
     notificationWebhook: process.env.NOTIFICATION_WEBHOOK,
+    emailNotificationsEnabled: process.env.ENABLE_EMAIL_NOTIFICATIONS,
+    notificationEmails: process.env.NOTIFICATION_EMAILS,
+    smtpHost: process.env.SMTP_HOST!,
+    smtpPort: process.env.SMTP_PORT!,
+    smtpSecure: process.env.SMTP_SECURE === 'true',
+    smtpUser: process.env.SMTP_USER!,
+    smtpPass: process.env.SMTP_PASS!,
+
 };

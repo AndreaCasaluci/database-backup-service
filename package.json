@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "clean": "rm -rf dist/core/notification/templates",
+    "build": "npm run clean && tsc && npm run copy-static",
+    "copy-static": "cp -r src/core/notification/templates dist/core/notification/templates",
     "start": "node dist/index.js",
     "dev": "ts-node-dev src/index.ts"
   },
@@ -13,11 +15,14 @@
   "dependencies": {
     "dotenv": "^16.6.0",
     "fs-extra": "^11.3.0",
-    "node-cron": "^4.1.1"
+    "handlebars": "^4.7.8",
+    "node-cron": "^4.1.1",
+    "nodemailer": "^7.0.4"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.0.4",
+    "@types/nodemailer": "^6.4.17",
     "typescript": "^5.8.3"
   }
 }

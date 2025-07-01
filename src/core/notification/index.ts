@@ -3,34 +3,48 @@ import { config } from '../../config';
 import { INotificationService } from '../interfaces/INotificationService';
 import { EmailNotifier } from './EmailNotifier';
 import { DiscordNotifier } from './DiscordNotifier';
+import { StringUtils } from '../../utils/StringUtils';
 
-const notifiers: INotificationService[] = [
-    new EmailNotifier(),
-    new DiscordNotifier()
-];
+const NOTIFIER_CONFIGS = [
+    {
+        notifier: EmailNotifier,
+        enabled: () => config.emailNotificationsEnabled
+    },
+    {
+        notifier: DiscordNotifier,
+        enabled: () => config.discordNotificationsEnabled
+    }
+]
+
+function getEnabledNotifiers(): INotificationService[] {
+    return NOTIFIER_CONFIGS.filter(({ enabled }) => enabled())
+        .map(({ notifier }) => new notifier());
+}
+
+async function executeNotifications(
+    notificationFn: (notifier: INotificationService) => Promise<void>
+): Promise<void> {
+    const notifiers = getEnabledNotifiers();
+
+    const notifications = notifiers.map(async (notifier) => {
+        try {
+            await notificationFn(notifier);
+        } catch (err) {
+            console.error('Notification failure:', err);
+        }
+    });
+
+    await Promise.allSettled(notifications);
+}
 
 export async function notifySuccess(message: string, report?: BackupReport) {
-    for (const notifier of notifiers) {
-        try {
-            if (notifier instanceof EmailNotifier && config.emailNotificationsEnabled)
-                await notifier.sendSuccess(message, report);
-            else if (notifier instanceof DiscordNotifier && config.discordNotificationsEnabled)
-                await notifier.sendSuccess(message, report);
-        } catch (err) {
-            console.error('Notification failure (success):', err);
-        }
-    }
+    await executeNotifications(notifier => notifier.sendSuccess(filterNotificationMessage(message), report));
 }
 
 export async function notifyFailure(message: string, error?: unknown, report?: BackupReport) {
-    for (const notifier of notifiers) {
-        try {
-            if (notifier instanceof EmailNotifier && config.emailNotificationsEnabled)
-                await notifier.sendFailure(message, error, report);
-            else if (notifier instanceof DiscordNotifier && config.discordNotificationsEnabled)
-                await notifier.sendFailure(message, error, report);
-        } catch (err) {
-            console.error('Notification failure (error):', err);
-        }
-    }
+    await executeNotifications(notifier => notifier.sendFailure(filterNotificationMessage(message), filterNotificationMessage(error instanceof Error ? error.message : String(error)), report));
+}
+
+function filterNotificationMessage(message: string): string {
+    return StringUtils.filterMessage(message, [...config.stringsToFilter, config.mongoUri]);
 }

@@ -1,7 +1,18 @@
-# === Stage 1: Build ===
-FROM node:18-alpine AS builder
+FROM node:18-slim
 
-RUN apk add --no-cache bash curl tzdata
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl gnupg bash ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MongoDB tools (including mongosh)
+RUN curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg \
+    && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" \
+    | tee /etc/apt/sources.list.d/mongodb-org-7.0.list \
+    && apt-get update && apt-get install -y \
+    mongodb-database-tools \
+    mongodb-mongosh \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -12,22 +23,10 @@ COPY . .
 
 RUN npm run build
 
-# === Stage 2: Runtime ===
-FROM node:18-alpine
-
-RUN apk add --no-cache mongodb-tools bash curl tzdata
-
-WORKDIR /app
-
-COPY --from=builder /app/dist ./dist
-COPY package*.json ./
-
-RUN npm ci --only=production
-
-RUN mkdir -p /app/backups
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S backup -u 1001 -G nodejs && \
-    chown -R backup:nodejs /app
+RUN mkdir -p /app/backups \
+    && addgroup --gid 1001 nodejs \
+    && adduser --disabled-password --uid 1001 --ingroup nodejs backup \
+    && chown -R backup:nodejs /app
 
 USER backup
 

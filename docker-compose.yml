@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backup-service:
+    build: .
+    container_name: database-backup-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./backups:/app/backups
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backup-network
+    depends_on:
+      - mongodb
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: myapp
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - backup-network
+
+networks:
+  backup-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

@@ -37,6 +37,8 @@ The service follows a modular architecture with clear separation of concerns:
 
 ## Installation
 
+### Local Installation
+
 1. Clone the repository
 2. Install dependencies:
    ```bash
@@ -60,13 +62,49 @@ The service follows a modular architecture with clear separation of concerns:
    cp .env.example .env
    ```
 
+### Docker Installation
+
+**Prerequisites:**
+- Docker and Docker Compose installed
+
+**Setup:**
+1. Clone the repository
+2. Copy and configure environment:
+   ```bash
+   cp .env.docker .env
+   # Edit .env with your actual configuration
+   ```
+
+3. Start with Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+4. Copy the environment template and configure:
+   ```bash
+   cp .env.example .env
+   ```
+
+**Docker Features:**
+- 🐳 Complete containerized environment
+- 🗄️ Includes MongoDB container for testing
+- 📦 MongoDB tools pre-installed
+- 🔒 Non-root user execution for security
+- 📊 Health checks and monitoring
+- 🔄 Automatic restart policies
+- 📁 Persistent backup storage
+
 ## Configuration
 
 Configure the service using environment variables in your `.env` file:
 
 ### Database Configuration
 ```env
+# Local development
 MONGODB_URI=mongodb://localhost:27017/your-database
+
+# Docker environment (using Docker Compose MongoDB)
+MONGODB_URI=mongodb://admin:password123@mongodb:27017/myapp?authSource=admin
 ```
 
 ### Backup Settings
@@ -100,12 +138,44 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your_id/your_token
 
 ### Starting the Service
 
+#### Local Development
 ```bash
 # Build the project
 npm run build
 
 # Run the service
 node dist/index.js
+```
+
+#### Docker Deployment
+
+**Quick Start with Docker Compose:**
+```bash
+# Copy environment template
+cp .env.docker .env
+# Edit .env with your configuration
+
+# Start all services (backup service + MongoDB)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backup-service
+
+# Stop services
+docker-compose down
+```
+
+**Manual Docker Build:**
+```bash
+# Build image
+docker build -t database-backup-service .
+
+# Run container
+docker run -d \
+  --name backup-service \
+  --env-file .env \
+  -v $(pwd)/backups:/app/backups \
+  database-backup-service
 ```
 
 The service will:
@@ -168,7 +238,7 @@ The service implements comprehensive error handling:
 ## File Management
 
 ### Backup File Naming
-Backup files follow the pattern: `backup-YYYY-MM-DD-HH-mm-ss.archive`
+Backup files follow the pattern: `backup-YYYY-MM-DD-HH-mm-ss`
 
 ### Automatic Cleanup
 - Maintains only the most recent backups (configurable via `MAX_BACKUPS`)
@@ -246,7 +316,61 @@ To add new notification methods:
 - Ensure backup directory has appropriate file permissions
 - Consider encrypting backup files for sensitive data
 
-## Troubleshooting
+## Docker Deployment
+
+### Docker Architecture
+- **Base Image**: Node.js 18 Alpine Linux
+- **Security**: Non-root user execution (user: backup, uid: 1001)
+- **Tools**: MongoDB database tools pre-installed
+- **Health Checks**: Built-in container health monitoring
+- **Volumes**: Persistent backup storage
+- **Network**: Isolated bridge network for service communication
+
+### Docker Compose Services
+- **backup-service**: The main backup application
+- **mongodb**: MongoDB database for testing/development
+- **Volumes**: `mongodb_data` for database persistence, local `./backups` for backup files
+- **Network**: `backup-network` for secure inter-service communication
+
+### Docker Commands
+```bash
+# Production deployment
+docker-compose up -d
+
+# Development with hot-reload
+docker-compose -f docker-compose.yml up -d
+
+# View logs
+docker-compose logs -f backup-service
+
+# Scale and manage
+docker-compose ps                    # View service status
+docker-compose restart backup-service # Restart specific service
+docker-compose down                  # Stop all services
+
+# Container management
+docker exec -it database-backup-service sh  # Access container shell
+docker stats database-backup-service        # Monitor resources
+```
+
+### Environment Files
+- **`.env`**: Local development configuration
+- **`.env.docker`**: Docker-specific configuration template
+- **Docker environment variables**: Automatically loaded via `env_file` in docker-compose.yml
+
+### Volume Mounts
+```yaml
+volumes:
+  - ./backups:/app/backups              # Backup persistence
+  - /etc/localtime:/etc/localtime:ro    # Timezone sync
+```
+
+### Docker Security Features
+- Alpine Linux base for minimal attack surface
+- Non-root user execution (backup:nodejs)
+- Network isolation with custom bridge
+- Environment-based secret management
+- Read-only system file mounts
 
 ### Common Issues
 
@@ -269,6 +393,54 @@ To add new notification methods:
 - Ensure `mongodump` is installed and accessible
 - Check backup directory permissions
 - Verify sufficient disk space
+
+### Docker-Specific Issues
+
+**Container Won't Start**
+```bash
+# Check container logs
+docker-compose logs backup-service
+
+# Verify MongoDB connectivity
+docker-compose exec backup-service mongodump --version
+```
+
+**Permission Denied on Backup Directory**
+```bash
+# Fix backup directory permissions
+sudo chown -r 1001:1001 ./backups
+chmod 755 ./backups
+```
+
+**MongoDB Connection Issues in Docker**
+```bash
+# Check if MongoDB container is running
+docker-compose ps mongodb
+
+# Test connection from backup service
+docker-compose exec backup-service \
+  mongodump --host mongodb:27017 --version
+
+# Check Docker network
+docker network ls
+docker network inspect database-backup-service_backup-network
+```
+
+**Build Issues**
+```bash
+# Clean Docker cache and rebuild
+docker system prune -a
+docker-compose build --no-cache
+```
+
+**Container Resource Issues**
+```bash
+# Monitor container resources
+docker stats database-backup-service
+
+# Check available disk space
+docker system df
+```
 
 ### Logs and Debugging
 

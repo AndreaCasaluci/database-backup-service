@@ -11,9 +11,11 @@ COPY --from=mongo-tools /usr/bin/mongoexport /usr/bin/mongoexport
 COPY --from=mongo-tools /usr/bin/mongoimport /usr/bin/mongoimport
 COPY --from=mongo-tools /usr/bin/mongorestore /usr/bin/mongorestore
 
-# Install basic dependencies
+# Install basic dependencies and MongoDB tools dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates tzdata bash \
+    libgssapi-krb5-2 libkrb5-3 libk5crypto3 libcom-err2 \
+    libssl3 libsasl2-2 libldap-2.5-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify installations

@@ -18,4 +18,4 @@ sudo chown -R ${USER_ID}:${GROUP_ID} "$BACKUP_DIR"
 docker compose build --no-cache
 docker compose up -d
 
-echo "Service started! Check logs with: docker-compose logs -f backup-service"
+echo "Service started! Check logs with: docker compose logs -f backup-service"

@@ -31,8 +31,8 @@ COPY . .
 RUN npm run build
 
 RUN mkdir -p /app/backups \
-    && (addgroup --gid 1001 nodejs || true) \
-    && (adduser --disabled-password --uid 1001 --gid 1001 backup || true) \
+    && addgroup --gid 1000 nodejs \
+    && (adduser --disabled-password --uid 1000 --gid 1000 backup || true) \
     && chown -R backup:nodejs /app
 
 USER backup

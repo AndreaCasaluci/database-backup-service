@@ -1,17 +1,19 @@
+# Multi-stage build to get MongoDB tools from official MongoDB image
+FROM mongo:7.0 AS mongo-tools
+
+# Main application image
 FROM node:18-slim
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    curl gnupg bash ca-certificates tzdata \
-    && rm -rf /var/lib/apt/lists/*
+# Copy MongoDB tools from the mongo image
+COPY --from=mongo-tools /usr/bin/mongosh /usr/bin/mongosh
+COPY --from=mongo-tools /usr/bin/mongodump /usr/bin/mongodump
+COPY --from=mongo-tools /usr/bin/mongoexport /usr/bin/mongoexport
+COPY --from=mongo-tools /usr/bin/mongoimport /usr/bin/mongoimport
+COPY --from=mongo-tools /usr/bin/mongorestore /usr/bin/mongorestore
 
-# Install MongoDB tools (Docker will automatically use the right architecture)
-RUN curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-    && echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
-    | tee /etc/apt/sources.list.d/mongodb-org-7.0.list \
-    && apt-get update && apt-get install -y \
-    mongodb-database-tools \
-    mongodb-mongosh \
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates tzdata bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify installations

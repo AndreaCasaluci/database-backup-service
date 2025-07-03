@@ -14,7 +14,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./backups:/app/backups
+      - ${BACKUP_DIR}:/app/backups
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backup-network

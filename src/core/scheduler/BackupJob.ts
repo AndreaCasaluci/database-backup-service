@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { NodeCron, TaskOptions } from 'node-cron';
 import { config } from '../../config';
 import { MongoBackupService } from '../databases/mongo/MongoBackupService';
 import { BackupManager } from '../manager/BackupManager';
@@ -41,11 +41,18 @@ class BackupJob {
             return;
         }
 
+        const cronOptions: TaskOptions = {};
+
         console.log(`📅 Scheduling backup job with cron: ${config.cronSchedule}`);
+
+        if (config.cronTimezone) {
+            cronOptions.timezone = config.cronTimezone;
+        }
 
         this.cronJob = cron.schedule(config.cronSchedule, async () => {
             await this.runBackupJob();
-        });
+        }, cronOptions);
+
         console.log('✅ Backup job scheduled successfully');
 
         cron.schedule('0 * * * *', () => {

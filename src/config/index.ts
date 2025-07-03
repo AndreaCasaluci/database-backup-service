@@ -6,7 +6,7 @@ export const config = {
     backupDir: process.env.BACKUP_DIR || './backups',
     maxBackups: parseInt(process.env.MAX_BACKUPS || '7', 10),
     cronSchedule: process.env.CRON_SCHEDULE || '0 0 * * *',
-    timezone: process.env.TIMEZONE || 'UTC',
+    cronTimezone: process.env.CRON_TIMEZONE,
     backupTimeout: parseInt(process.env.BACKUP_TIMEOUT || '1800000'),
     enableCompression: process.env.ENABLE_COMPRESSION === 'true',
     emailNotificationsEnabled: process.env.ENABLE_EMAIL_NOTIFICATIONS,

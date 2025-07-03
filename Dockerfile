@@ -4,8 +4,8 @@ FROM mongo:7.0 AS mongo-tools
 # Main application image
 FROM node:18-slim
 
-ARG USER_ID
-ARG GROUP_ID
+ARG USER_ID=1000
+ARG GROUP_ID=1000
 
 # Copy MongoDB tools from the mongo image
 COPY --from=mongo-tools /usr/bin/mongosh /usr/bin/mongosh
@@ -34,9 +34,9 @@ COPY . .
 RUN npm run build
 
 RUN mkdir -p /app/backups \
-    && getent group ${GROUP_ID} || addgroup --gid ${GROUP_ID} nodejs \
-    && adduser --disabled-password --uid ${USER_ID} --gid ${GROUP_ID} backup || true \
-    && chown -R backup:nodejs /app
+    && groupadd -g ${GROUP_ID} nodejs 2>/dev/null || true \
+    && id -u backup >/dev/null 2>&1 || useradd -u ${USER_ID} -g ${GROUP_ID} -m backup \
+    && chown -R ${USER_ID}:${GROUP_ID} /app
 
 USER backup
 

@@ -43,11 +43,11 @@ class BackupJob {
 
         const cronOptions: TaskOptions = {};
 
-        console.log(`📅 Scheduling backup job with cron: ${config.cronSchedule}`);
-
         if (config.cronTimezone) {
             cronOptions.timezone = config.cronTimezone;
         }
+
+        console.log(`📅 Scheduling backup job with cron: ${config.cronSchedule} ${config.cronTimezone ? "Timezone: " + config.cronTimezone : ""}`);
 
         this.cronJob = cron.schedule(config.cronSchedule, async () => {
             await this.runBackupJob();
